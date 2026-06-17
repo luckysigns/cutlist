@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cutlist — Video Idea Board</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --ink: #0e0f13; --panel: #171922; --panel-2: #1f2230;
+    --edge: #2a2e3f; --edge-soft: #232636;
+    --text: #e8e9ef; --muted: #8a8fa3; --dim: #5a5f72;
+    --signal: #ff4d3d; --signal-soft: #ff4d3d22;
+    --amber: #ffb340; --green: #38d39f; --blue: #4d9fff; --violet: #b388ff; --pink: #ff6fb5;
+    --yt: #ff3b30; --tt: #25f4ee; --tt2: #fe2c55;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Archivo', system-ui, sans-serif;
+    background: radial-gradient(1200px 600px at 80% -10%, #1c1f2e 0%, transparent 60%), var(--ink);
+    color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased;
+  }
+  header {
+    display: flex; align-items: center; gap: 18px; padding: 18px 26px;
+    border-bottom: 1px solid var(--edge-soft); position: sticky; top: 0; z-index: 50;
+    background: rgba(14,15,19,0.82); backdrop-filter: blur(14px);
+  }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .rec-dot { width: 13px; height: 13px; border-radius: 50%; background: var(--signal); animation: pulse 2.4s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(255,77,61,0.45);} 70%{box-shadow:0 0 0 9px rgba(255,77,61,0);} 100%{box-shadow:0 0 0 0 rgba(255,77,61,0);} }
+  .brand h1 { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+  .brand span { color: var(--dim); font-weight: 500; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .spacer { flex: 1; }
+  .filters { display: flex; background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; padding: 3px; gap: 2px; }
+  .filters button { border: 0; background: transparent; color: var(--muted); font-family: inherit; font-weight: 600; font-size: 13px;
+    padding: 7px 13px; border-radius: 7px; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 6px; }
+  .filters button.active { background: var(--panel-2); color: var(--text); }
+  .pf-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .add-btn { border: 0; background: var(--signal); color: #fff; font-family: inherit; font-weight: 700; font-size: 13px;
+    padding: 9px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: transform .12s, filter .15s; }
+  .sync { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--muted);
+    background: var(--panel); border: 1px solid var(--edge); padding: 6px 10px; border-radius: 9px; }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); transition: background .2s; }
+  .sync.ok .sync-dot { background: var(--green); }
+  .sync.syncing .sync-dot { background: var(--amber); animation: pulse2 1s infinite; }
+  .sync.err .sync-dot { background: var(--signal); }
+  @keyframes pulse2 { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+  .add-btn:hover { filter: brightness(1.08); }
+  .add-btn:active { transform: scale(.96); }
+
+  main { padding: 24px 26px 90px; max-width: 1240px; margin: 0 auto; }
+  .stats { display: flex; gap: 22px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat { display: flex; align-items: baseline; gap: 7px; }
+  .stat b { font-size: 22px; font-weight: 800; font-family: 'Spline Sans Mono', monospace; }
+  .stat small { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .grid { display: grid; gap: 11px; transition: gap .2s; }
+  .idea { position: relative; background: var(--panel-2); border: 1px solid var(--edge); border-radius: 12px; padding: 0; overflow: hidden;
+    cursor: pointer; transition: transform .14s, box-shadow .16s, border-color .16s; }
+  .idea:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.4); border-color: var(--dim); }
+  /* platform = thin left edge-stripe */
+  .idea::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; z-index: 1; }
+  .pf-youtube::before { background: var(--yt); }
+  .pf-tiktok::before { background: linear-gradient(180deg, var(--tt), var(--tt2)); }
+  .pf-short::before { background: linear-gradient(180deg, var(--yt), var(--pink)); }
+  .pf-both::before { background: linear-gradient(180deg, var(--yt) 0%, var(--yt) 48%, var(--tt) 52%, var(--tt2) 100%); }
+  .idea-pad { padding: 11px 13px 12px 15px; }
+  .pf-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; letter-spacing: 0.05em;
+    text-transform: uppercase; padding: 3px 7px; border-radius: 6px; margin-bottom: 8px; }
+  .pf-youtube .pf-badge { background: rgba(255,59,48,0.14); color: #ff7a70; }
+  .pf-tiktok .pf-badge { background: rgba(37,244,238,0.12); color: var(--tt); }
+  .pf-short .pf-badge { background: rgba(255,111,181,0.14); color: var(--pink); }
+  .pf-both .pf-badge { background: rgba(255,255,255,0.08); color: var(--text); }
+  .pf-badge svg { width: 12px; height: 12px; }
+  .idea h3 { font-size: 14px; font-weight: 700; line-height: 1.25; margin-bottom: 7px; letter-spacing: -0.01em; }
+  .idea-note { font-size: 12px; color: var(--muted); line-height: 1.4; margin-bottom: 10px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .stage-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em;
+    padding: 4px 9px; border-radius: 20px; background: var(--ink); }
+  .stage-chip .st-tick { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .idea-foot { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+  .task-mini { display: flex; align-items: center; gap: 7px; flex: 1; justify-content: flex-end; }
+  .task-mini .label { font-family: 'Spline Sans Mono', monospace; font-size: 10.5px; color: var(--dim); white-space: nowrap; }
+  .progress-mini { flex: 1; height: 4px; background: var(--ink); border-radius: 5px; overflow: hidden; max-width: 70px; }
+  .progress-mini i { display: block; height: 100%; border-radius: 5px; transition: width .3s; }
+  .empty-grid { grid-column: 1/-1; color: var(--dim); font-size: 13px; text-align: center; padding: 50px 8px; border: 1px dashed var(--edge); border-radius: 14px; }
+  .color-flag { position: absolute; top: 11px; right: 11px; width: 9px; height: 9px; border-radius: 50%; z-index: 1; }
+  /* stage dot — only shown in the most compact tiers, sits where the chip would */
+  .stage-dot { display: none; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .idea-head { display: flex; align-items: center; gap: 9px; }
+  .idea-head h3 { margin-bottom: 0; }
+
+  /* ---------- DENSITY TIERS ---------- */
+  /* 5 = roomiest */
+  .grid[data-density="5"] { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+  .grid[data-density="5"] .idea h3 { font-size: 16px; }
+  .grid[data-density="5"] .idea-note { -webkit-line-clamp: 3; }
+
+  /* 4 = comfortable (default) */
+  .grid[data-density="4"] { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 13px; }
+  .grid[data-density="4"] .idea-note { -webkit-line-clamp: 2; }
+
+  /* 3 = compact — drop the note, keep badge + stage chip + progress */
+  .grid[data-density="3"] { grid-template-columns: repeat(auto-fill, minmax(205px, 1fr)); gap: 11px; }
+  .grid[data-density="3"] .idea-note { display: none; }
+  .grid[data-density="3"] .idea h3 { font-size: 13.5px; margin-bottom: 9px; }
+  .grid[data-density="3"] .idea-pad { padding: 11px 12px 12px 14px; }
+
+  /* 2 = dense — title + small platform badge + stage dot, no chip/progress */
+  .grid[data-density="2"] { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 9px; }
+  .grid[data-density="2"] .idea-note,
+  .grid[data-density="2"] .idea-foot { display: none; }
+  .grid[data-density="2"] .idea-pad { padding: 9px 11px 10px 13px; }
+  .grid[data-density="2"] .idea h3 { font-size: 13px; margin-bottom: 0; }
+  .grid[data-density="2"] .pf-badge { margin-bottom: 7px; }
+
+  /* 1 = minimal — one line: stage dot + title, platform = the edge stripe only */
+  .grid[data-density="1"] { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 7px; }
+  .grid[data-density="1"] .idea-note,
+  .grid[data-density="1"] .idea-foot,
+  .grid[data-density="1"] .pf-badge,
+  .grid[data-density="1"] .color-flag { display: none; }
+  .grid[data-density="1"] .idea { border-radius: 9px; }
+  .grid[data-density="1"] .idea-pad { padding: 9px 10px 9px 12px; }
+  .grid[data-density="1"] .stage-dot { display: block; }
+  .grid[data-density="1"] .idea h3 { font-size: 12.5px; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  .scrim { position: fixed; inset: 0; background: rgba(6,7,10,0.66); backdrop-filter: blur(4px); display: none; z-index: 100; }
+  .scrim.open { display: block; animation: fade .2s; }
+  @keyframes fade { from{opacity:0;} to{opacity:1;} }
+  .panel { position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 560px; background: var(--panel);
+    border-left: 1px solid var(--edge); box-shadow: -30px 0 80px rgba(0,0,0,0.5); display: flex; flex-direction: column;
+    transform: translateX(100%); transition: transform .28s cubic-bezier(.2,.8,.2,1); overflow-y: auto; }
+  .scrim.open .panel { transform: none; }
+  .panel-banner { height: 7px; flex-shrink: 0; }
+  .panel-head { padding: 22px 26px 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+  .panel-head .x { background: var(--panel-2); border: 1px solid var(--edge); color: var(--muted); width: 34px; height: 34px;
+    border-radius: 10px; cursor: pointer; font-size: 18px; flex-shrink: 0; transition: all .15s; }
+  .panel-head .x:hover { color: var(--text); border-color: var(--dim); }
+  .panel-body { padding: 18px 26px 30px; display: flex; flex-direction: column; gap: 22px; }
+  .titleInput { font-family: inherit; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; background: transparent; border: 0;
+    color: var(--text); width: 100%; padding: 0; line-height: 1.2; }
+  .titleInput:focus { outline: none; }
+  .seg-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .pf-select { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pf-opt { display: flex; align-items: center; gap: 7px; cursor: pointer; border: 1px solid var(--edge); background: var(--ink);
+    color: var(--muted); padding: 8px 13px; border-radius: 10px; font-size: 12.5px; font-weight: 700; transition: all .15s; }
+  .pf-opt svg { width: 14px; height: 14px; }
+  .pf-opt[data-on="yt"].sel { border-color: var(--yt); color: #ff7a70; background: rgba(255,59,48,0.1); }
+  .pf-opt[data-on="tt"].sel { border-color: var(--tt); color: var(--tt); background: rgba(37,244,238,0.08); }
+  .pf-opt[data-on="short"].sel { border-color: var(--pink); color: var(--pink); background: rgba(255,111,181,0.1); }
+  .pf-opt[data-on="both"].sel { border-color: var(--text); color: var(--text); background: rgba(255,255,255,0.06); }
+
+  .pipeline { display: flex; flex-direction: column; gap: 0; }
+  .pipe-stage { display: flex; align-items: center; gap: 13px; padding: 12px 14px; border-radius: 11px; cursor: pointer;
+    border: 1px solid transparent; transition: all .15s; position: relative; }
+  .pipe-stage:hover { background: var(--panel-2); }
+  .pipe-stage.current { background: var(--panel-2); border-color: var(--stagecolor); }
+  .pipe-node { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; border: 2px solid var(--edge);
+    display: flex; align-items: center; justify-content: center; transition: all .2s; position: relative; z-index: 2; background: var(--ink); }
+  .pipe-stage.done .pipe-node { background: var(--stagecolor); border-color: var(--stagecolor); }
+  .pipe-stage.current .pipe-node { border-color: var(--stagecolor); box-shadow: 0 0 0 4px color-mix(in srgb, var(--stagecolor) 25%, transparent); }
+  .pipe-node svg { width: 13px; height: 13px; color: var(--ink); opacity: 0; transition: opacity .2s; }
+  .pipe-stage.done .pipe-node svg { opacity: 1; }
+  .pipe-stage:not(:last-child)::before { content: ''; position: absolute; left: 26px; top: 38px; width: 2px; height: 14px; background: var(--edge); z-index: 1; }
+  .pipe-stage.done:not(:last-child)::before { background: var(--stagecolor); }
+  .pipe-label { font-size: 14px; font-weight: 600; flex: 1; }
+  .pipe-stage.current .pipe-label { font-weight: 800; }
+  .pipe-tag { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--stagecolor); opacity: 0; }
+  .pipe-stage.current .pipe-tag { opacity: 1; }
+
+  .field-block { display: flex; flex-direction: column; gap: 9px; }
+  textarea { font-family: inherit; background: var(--ink); border: 1px solid var(--edge); color: var(--text); border-radius: 11px;
+    padding: 13px; font-size: 14px; line-height: 1.55; resize: vertical; min-height: 90px; transition: border-color .15s; }
+  textarea:focus { outline: none; border-color: var(--signal); }
+  .swatches { display: flex; gap: 9px; }
+  .swatch { width: 28px; height: 28px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: transform .12s; }
+  .swatch:hover { transform: scale(1.12); }
+  .swatch.sel { border-color: #fff; }
+  .checklist { display: flex; flex-direction: column; gap: 8px; }
+  .check-item { display: flex; align-items: center; gap: 10px; background: var(--ink); border: 1px solid var(--edge); border-radius: 10px; padding: 9px 11px; }
+  .check-item input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--green); cursor: pointer; flex-shrink: 0; }
+  .check-item input[type=text] { background: transparent; border: 0; padding: 0; font-size: 13.5px; flex: 1; color: var(--text); }
+  .check-item input[type=text]:focus { outline: none; }
+  .check-item.done input[type=text] { text-decoration: line-through; color: var(--dim); }
+  .check-item .del { background: transparent; border: 0; color: var(--dim); cursor: pointer; font-size: 16px; }
+  .check-item .del:hover { color: var(--signal); }
+  .add-check { background: transparent; border: 1px dashed var(--edge); color: var(--muted); border-radius: 10px; padding: 9px;
+    cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 700; transition: all .15s; }
+  .add-check:hover { border-color: var(--dim); color: var(--text); }
+  .panel-foot { display: flex; gap: 10px; padding: 16px 26px; border-top: 1px solid var(--edge-soft); position: sticky; bottom: 0; background: var(--panel); }
+  .btn-primary { flex: 1; background: var(--signal); color: #fff; border: 0; border-radius: 11px; padding: 13px; font-family: inherit;
+    font-weight: 700; font-size: 14px; cursor: pointer; transition: filter .15s; }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-ghost { background: var(--panel-2); color: var(--muted); border: 1px solid var(--edge); border-radius: 11px; padding: 13px 18px;
+    font-family: inherit; font-weight: 600; font-size: 14px; cursor: pointer; transition: all .15s; }
+  .btn-ghost:hover { color: var(--signal); border-color: var(--signal); }
+
+  /* ---------- density bar ---------- */
+  .density-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    display: flex; align-items: center; gap: 14px; justify-content: center;
+    padding: 12px 26px; background: rgba(14,15,19,0.9); backdrop-filter: blur(14px);
+    border-top: 1px solid var(--edge-soft); }
+  .density-bar .dlabel { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .density-bar .dlabel svg { width: 15px; height: 15px; vertical-align: -3px; margin-right: 4px; }
+  .density-bar input[type=range] { -webkit-appearance: none; appearance: none; width: min(340px, 50vw); height: 5px;
+    background: var(--edge); border-radius: 6px; outline: none; cursor: pointer; }
+  .density-bar input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px;
+    border-radius: 50%; background: var(--signal); cursor: grab; box-shadow: 0 2px 8px rgba(0,0,0,0.4); transition: transform .12s; }
+  .density-bar input[type=range]::-webkit-slider-thumb:active { transform: scale(1.15); }
+  .density-bar input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 50%; background: var(--signal); cursor: grab; }
+  .density-bar .dval { font-family: 'Spline Sans Mono', monospace; font-size: 12px; color: var(--text); min-width: 64px; text-align: left; }
+
+  ::-webkit-scrollbar { height: 10px; width: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--edge); border-radius: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  @media (max-width: 640px) {
+    header { flex-wrap: wrap; gap: 12px; } .brand span { display: none; } main { padding: 16px 14px 50px; }
+    .filters button span.txt { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="rec-dot"></div><h1>Cutlist</h1><span>Idea Board</span></div>
+  <div class="spacer"></div>
+  <div class="filters" id="filters">
+    <button data-f="all" class="active">All</button>
+    <button data-f="youtube"><span class="pf-dot" style="background:var(--yt)"></span><span class="txt">YouTube</span></button>
+    <button data-f="tiktok"><span class="pf-dot" style="background:var(--tt)"></span><span class="txt">TikTok</span></button>
+  </div>
+  <span class="sync" id="sync" title="Cloud sync status"><span class="sync-dot"></span><span id="syncTxt">Sync</span></span>
+  <button class="add-btn" id="newBtn">+ New idea</button>
+</header>
+
+<main>
+  <div class="stats" id="stats"></div>
+  <div class="grid" id="grid" data-density="4"></div>
+</main>
+
+<div class="density-bar">
+  <span class="dlabel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Density</span>
+  <input type="range" id="density" min="1" max="5" step="1" value="4">
+  <span class="dval" id="dval">Comfortable</span>
+</div>
+
+<div class="scrim" id="scrim">
+  <div class="panel" id="panel">
+    <div class="panel-banner" id="panelBanner"></div>
+    <div class="panel-head">
+      <input class="titleInput" id="fTitle" placeholder="Untitled idea">
+      <button class="x" id="closeBtn">×</button>
+    </div>
+    <div class="panel-body">
+      <div class="field-block">
+        <div class="seg-label">Platform</div>
+        <div class="pf-select" id="pfSelect">
+          <div class="pf-opt" data-on="yt"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.5a3 3 0 0 0-2.1-2.1C19 5 12 5 12 5s-7 0-8.9.4A3 3 0 0 0 1 7.5 31 31 0 0 0 .6 12 31 31 0 0 0 1 16.5a3 3 0 0 0 2.1 2.1C5 19 12 19 12 19s7 0 8.9-.4a3 3 0 0 0 2.1-2.1A31 31 0 0 0 23.4 12 31 31 0 0 0 23 7.5zM9.8 15.3V8.7l5.7 3.3z"/></svg>YouTube</div>
+          <div class="pf-opt" data-on="tt"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-1-2.8h-3v12.2a2.6 2.6 0 1 1-2.6-2.6c.27 0 .53.04.78.12V9.6a5.7 5.7 0 0 0-.78-.06 5.6 5.6 0 1 0 5.6 5.6V9.3a7.2 7.2 0 0 0 4.2 1.34V7.6a4.3 4.3 0 0 1-3.2-1.8z"/></svg>TikTok</div>
+          <div class="pf-opt" data-on="short">YT Short</div>
+          <div class="pf-opt" data-on="both">Both</div>
+        </div>
+      </div>
+      <div class="field-block">
+        <div class="seg-label">Stage — tap to set where it's at</div>
+        <div class="pipeline" id="pipeline"></div>
+      </div>
+      <div class="field-block">
+        <div class="seg-label">Notes</div>
+        <textarea id="fNote" placeholder="Hook, angle, references, gear needed..."></textarea>
+      </div>
+      <div class="field-block">
+        <div class="seg-label">Color tag</div>
+        <div class="swatches" id="swatches"></div>
+      </div>
+      <div class="field-block">
+        <div class="seg-label">Checklist</div>
+        <div class="checklist" id="checklist"></div>
+        <button class="add-check" id="addCheck">+ Add task</button>
+      </div>
+    </div>
+    <div class="panel-foot">
+      <button class="btn-primary" id="saveBtn">Save idea</button>
+      <button class="btn-ghost" id="deleteBtn" style="display:none">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STAGES = [
+  { id: 'idea', name: 'Idea', color: '#b388ff' },
+  { id: 'scripting', name: 'Scripting', color: '#4d9fff' },
+  { id: 'filming', name: 'Filming', color: '#ff4d3d' },
+  { id: 'editing', name: 'Editing', color: '#ffb340' },
+  { id: 'scheduled', name: 'Scheduled', color: '#ff6fb5' },
+  { id: 'posted', name: 'Posted', color: '#38d39f' },
+];
+const COLORS = ['#ff4d3d','#ffb340','#38d39f','#4d9fff','#b388ff','#ff6fb5'];
+const PF = {
+  YouTube: { key:'youtube', cls:'pf-youtube', label:'YouTube', on:'yt' },
+  TikTok: { key:'tiktok', cls:'pf-tiktok', label:'TikTok', on:'tt' },
+  'YouTube Short': { key:'youtube', cls:'pf-short', label:'YT Short', on:'short' },
+  Both: { key:'both', cls:'pf-both', label:'YT + TikTok', on:'both' },
+};
+const PF_FROM_ON = { yt:'YouTube', tt:'TikTok', short:'YouTube Short', both:'Both' };
+const ICON_YT = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.5a3 3 0 0 0-2.1-2.1C19 5 12 5 12 5s-7 0-8.9.4A3 3 0 0 0 1 7.5 31 31 0 0 0 .6 12 31 31 0 0 0 1 16.5a3 3 0 0 0 2.1 2.1C5 19 12 19 12 19s7 0 8.9-.4a3 3 0 0 0 2.1-2.1A31 31 0 0 0 23.4 12 31 31 0 0 0 23 7.5zM9.8 15.3V8.7l5.7 3.3z"/></svg>';
+const ICON_TT = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-1-2.8h-3v12.2a2.6 2.6 0 1 1-2.6-2.6c.27 0 .53.04.78.12V9.6a5.7 5.7 0 0 0-.78-.06 5.6 5.6 0 1 0 5.6 5.6V9.3a7.2 7.2 0 0 0 4.2 1.34V7.6a4.3 4.3 0 0 1-3.2-1.8z"/></svg>';
+const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg>';
+
+let ideas = [], editingId = null, draft = null, filter = 'all';
+
+// ---------- Supabase (cross-device sync) ----------
+const SUPABASE_URL = 'https://ywjtbzxfdudrqsvsslzs.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Vt5ul1fZGuwxG8zq_ejyNw_kJackpiu';
+const TABLE = 'cutlist_ideas';
+let sb = null;
+try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e){ console.error('supabase init failed', e); }
+
+function setSync(state, txt){
+  const el = document.getElementById('sync');
+  el.className = 'sync' + (state ? ' '+state : '');
+  document.getElementById('syncTxt').textContent = txt || 'Sync';
+}
+
+// map between app idea object and db row
+const toRow = (idea, i=0) => ({
+  id: idea.id, title: idea.title, platform: idea.platform, stage: idea.stage,
+  note: idea.note, color: idea.color, checklist: idea.checklist || [],
+  position: i, updated_at: new Date().toISOString()
+});
+const fromRow = r => ({
+  id: r.id, title: r.title, platform: r.platform, stage: r.stage,
+  note: r.note, color: r.color, checklist: r.checklist || []
+});
+
+function cacheLocal(){ try { localStorage.setItem('cutlist:ideas', JSON.stringify(ideas)); } catch(e){} }
+
+async function load() {
+  // 1) instant: show local cache if we have one
+  try { const r = localStorage.getItem('cutlist:ideas'); ideas = r ? JSON.parse(r) : []; } catch { ideas = []; }
+  render();
+  // 2) pull from cloud
+  if (sb) {
+    setSync('syncing', 'Syncing…');
+    try {
+      const { data, error } = await sb.from(TABLE).select('*').order('position', { ascending: true });
+      if (error) throw error;
+      if (data && data.length) {
+        ideas = data.map(fromRow);
+        cacheLocal(); render();
+      } else if (!ideas.length) {
+        // empty cloud + empty local => first run: seed and push up
+        seedLocalOnly(); await pushAll();
+      } else {
+        // cloud empty but we have local cache => push local up
+        await pushAll();
+      }
+      setSync('ok', 'Synced');
+    } catch(e) {
+      console.error('cloud load failed', e);
+      setSync('err', 'Offline');
+      if (!ideas.length) { seedLocalOnly(); render(); }
+    }
+  } else {
+    if (!ideas.length) { seedLocalOnly(); render(); }
+  }
+}
+
+// upsert a single idea (instant local, then cloud)
+async function saveIdea(idea, idx){
+  cacheLocal();
+  if (!sb) return;
+  setSync('syncing', 'Saving…');
+  try {
+    const { error } = await sb.from(TABLE).upsert(toRow(idea, idx));
+    if (error) throw error;
+    setSync('ok', 'Synced');
+  } catch(e){ console.error('save failed', e); setSync('err', 'Offline'); }
+}
+
+async function deleteIdea(id){
+  cacheLocal();
+  if (!sb) return;
+  setSync('syncing', 'Saving…');
+  try {
+    const { error } = await sb.from(TABLE).delete().eq('id', id);
+    if (error) throw error;
+    setSync('ok', 'Synced');
+  } catch(e){ console.error('delete failed', e); setSync('err', 'Offline'); }
+}
+
+// push the whole local list up (used on first run / migration)
+async function pushAll(){
+  if (!sb || !ideas.length) return;
+  setSync('syncing', 'Syncing…');
+  try {
+    const rows = ideas.map((idea, i) => toRow(idea, i));
+    const { error } = await sb.from(TABLE).upsert(rows);
+    if (error) throw error;
+    setSync('ok', 'Synced');
+  } catch(e){ console.error('pushAll failed', e); setSync('err', 'Offline'); }
+}
+
+function seedLocalOnly() {
+  ideas = [
+    { id:uid(), title:'Channel trailer refresh', platform:'YouTube', stage:'idea',
+      note:'New intro that explains the channel in under 30s. Punchier hook.', color:'#b388ff',
+      checklist:[{t:'Write 3 hook options',d:false},{t:'Pull b-roll',d:false}] },
+    { id:uid(), title:'Day in the life — edit day', platform:'TikTok', stage:'filming',
+      note:'Vertical, fast cuts, trending audio. Keep it raw.', color:'#ff4d3d',
+      checklist:[{t:'Film morning setup',d:true},{t:'Film timelapse',d:false},{t:'Grab voiceover',d:false}] },
+    { id:uid(), title:'Gear setup tour 2026', platform:'Both', stage:'editing',
+      note:'Long-form for YT, cut a 60s vertical for TikTok.', color:'#ffb340',
+      checklist:[{t:'Color grade',d:true},{t:'Add captions',d:true},{t:'Export vertical cut',d:false}] },
+  ];
+  cacheLocal(); render();
+}
+const uid = () => Math.random().toString(36).slice(2,9);
+function progress(idea){ const l=idea.checklist||[]; if(!l.length) return {done:0,total:0,pct:0}; const done=l.filter(c=>c.d).length; return {done,total:l.length,pct:Math.round(done/l.length*100)}; }
+const stageOf = id => STAGES.find(s=>s.id===id) || STAGES[0];
+const esc = s => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function render(){ renderStats(); renderGrid(); }
+function renderStats(){
+  const total=ideas.length;
+  const posted=ideas.filter(i=>i.stage==='posted').length;
+  const prod=ideas.filter(i=>['filming','editing'].includes(i.stage)).length;
+  const yt=ideas.filter(i=>PF[i.platform]?.key==='youtube'||i.platform==='Both').length;
+  const tt=ideas.filter(i=>i.platform==='TikTok'||i.platform==='Both').length;
+  document.getElementById('stats').innerHTML =
+    `<div class="stat"><b>${total}</b><small>ideas</small></div>
+     <div class="stat"><b style="color:#ff7a70">${yt}</b><small>youtube</small></div>
+     <div class="stat"><b style="color:var(--tt)">${tt}</b><small>tiktok</small></div>
+     <div class="stat"><b style="color:var(--signal)">${prod}</b><small>in production</small></div>
+     <div class="stat"><b style="color:var(--green)">${posted}</b><small>posted</small></div>`;
+}
+function renderGrid(){
+  const grid=document.getElementById('grid'); grid.innerHTML='';
+  const list=ideas.filter(i=>{
+    if(filter==='all') return true;
+    if(filter==='youtube') return PF[i.platform]?.key==='youtube'||i.platform==='Both';
+    if(filter==='tiktok') return i.platform==='TikTok'||i.platform==='Both';
+    return true;
+  });
+  if(!list.length){ grid.innerHTML=`<div class="empty-grid">No ideas here yet. Hit “New idea” to capture one.</div>`; return; }
+  list.forEach(idea=>{
+    const pf=PF[idea.platform]||PF.YouTube, st=stageOf(idea.stage), p=progress(idea);
+    const badgeIcon = pf.key==='tiktok'?ICON_TT : pf.key==='both'?ICON_YT+ICON_TT : ICON_YT;
+    const card=document.createElement('div');
+    card.className='idea '+pf.cls;
+    card.innerHTML=
+      `<div class="color-flag" style="background:${idea.color}"></div>
+       <div class="idea-pad">
+         <span class="pf-badge">${badgeIcon}${pf.label}</span>
+         <div class="idea-head"><span class="stage-dot" style="background:${st.color}" title="${st.name}"></span><h3>${esc(idea.title)}</h3></div>
+         ${idea.note?`<div class="idea-note">${esc(idea.note)}</div>`:''}
+         <div class="idea-foot">
+           <span class="stage-chip"><span class="st-tick" style="background:${st.color}"></span>${st.name}</span>
+           <div class="task-mini">
+             ${p.total?`<div class="progress-mini"><i style="width:${p.pct}%;background:${st.color}"></i></div><span class="label">${p.done}/${p.total}</span>`:`<span class="label">no tasks</span>`}
+           </div>
+         </div>
+       </div>`;
+    card.onclick=()=>openPanel(idea.id);
+    grid.appendChild(card);
+  });
+}
+document.getElementById('filters').addEventListener('click', e=>{
+  const btn=e.target.closest('button'); if(!btn) return;
+  filter=btn.dataset.f;
+  [...document.querySelectorAll('#filters button')].forEach(b=>b.classList.toggle('active', b===btn));
+  renderGrid();
+});
+
+function renderPlatformSelect(){
+  document.querySelectorAll('#pfSelect .pf-opt').forEach(opt=>{
+    opt.classList.toggle('sel', PF_FROM_ON[opt.dataset.on]===draft.platform);
+    opt.onclick=()=>{ draft.platform=PF_FROM_ON[opt.dataset.on]; renderPlatformSelect(); updateBanner(); };
+  });
+}
+function updateBanner(){
+  const pf=PF[draft.platform]||PF.YouTube;
+  document.getElementById('panelBanner').style.background =
+    pf.key==='tiktok'?'linear-gradient(90deg,var(--tt),var(--tt2))'
+    : pf.cls==='pf-short'?'linear-gradient(90deg,var(--yt),var(--pink))'
+    : pf.key==='both'?'linear-gradient(90deg,var(--yt) 0%,var(--yt) 40%,var(--tt) 60%,var(--tt2) 100%)'
+    : 'linear-gradient(90deg,var(--yt),#ff7a70)';
+}
+function renderPipeline(){
+  const wrap=document.getElementById('pipeline'); wrap.innerHTML='';
+  const curIdx=STAGES.findIndex(s=>s.id===draft.stage);
+  STAGES.forEach((s,i)=>{
+    const done=i<curIdx, current=i===curIdx;
+    const row=document.createElement('div');
+    row.className='pipe-stage'+(done?' done':'')+(current?' current':'');
+    row.style.setProperty('--stagecolor', s.color);
+    row.innerHTML=`<div class="pipe-node">${ICON_CHECK}</div><div class="pipe-label">${s.name}</div><div class="pipe-tag">Now</div>`;
+    row.onclick=()=>{ draft.stage=s.id; renderPipeline(); };
+    wrap.appendChild(row);
+  });
+}
+function renderSwatches(){
+  const wrap=document.getElementById('swatches'); wrap.innerHTML='';
+  COLORS.forEach(c=>{
+    const sw=document.createElement('div');
+    sw.className='swatch'+(c===draft.color?' sel':'');
+    sw.style.background=c;
+    sw.onclick=()=>{ draft.color=c; renderSwatches(); };
+    wrap.appendChild(sw);
+  });
+}
+function renderChecklist(){
+  const wrap=document.getElementById('checklist'); wrap.innerHTML='';
+  draft.checklist.forEach((item,i)=>{
+    const row=document.createElement('div');
+    row.className='check-item'+(item.d?' done':'');
+    row.innerHTML=`<input type="checkbox" ${item.d?'checked':''}><input type="text" value="${esc(item.t)}" placeholder="Task..."><button class="del">×</button>`;
+    row.querySelector('[type=checkbox]').onchange=e=>{ draft.checklist[i].d=e.target.checked; renderChecklist(); };
+    row.querySelector('[type=text]').oninput=e=>{ draft.checklist[i].t=e.target.value; };
+    row.querySelector('.del').onclick=()=>{ draft.checklist.splice(i,1); renderChecklist(); };
+    wrap.appendChild(row);
+  });
+}
+document.getElementById('addCheck').onclick=()=>{ draft.checklist.push({t:'',d:false}); renderChecklist(); };
+
+function openPanel(id){
+  editingId=id||null;
+  const idea=id?ideas.find(i=>i.id===id):null;
+  draft=idea?JSON.parse(JSON.stringify(idea)):{title:'',platform:'YouTube',stage:'idea',note:'',color:COLORS[0],checklist:[]};
+  document.getElementById('fTitle').value=draft.title;
+  document.getElementById('fNote').value=draft.note;
+  document.getElementById('deleteBtn').style.display=idea?'block':'none';
+  renderPlatformSelect(); updateBanner(); renderPipeline(); renderSwatches(); renderChecklist();
+  document.getElementById('scrim').classList.add('open');
+  if(!idea) setTimeout(()=>document.getElementById('fTitle').focus(),250);
+}
+function closePanel(){ document.getElementById('scrim').classList.remove('open'); editingId=null; draft=null; }
+
+document.getElementById('fTitle').oninput=e=>{ if(draft) draft.title=e.target.value; };
+document.getElementById('fNote').oninput=e=>{ if(draft) draft.note=e.target.value; };
+document.getElementById('newBtn').onclick=()=>openPanel(null);
+document.getElementById('closeBtn').onclick=closePanel;
+document.getElementById('scrim').onclick=e=>{ if(e.target.id==='scrim') closePanel(); };
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePanel(); });
+
+document.getElementById('saveBtn').onclick=()=>{
+  if(!draft.title.trim()){ document.getElementById('fTitle').focus(); return; }
+  draft.title=draft.title.trim(); draft.note=draft.note.trim();
+  draft.checklist=draft.checklist.filter(c=>c.t.trim());
+  let target;
+  if(editingId){ const idea=ideas.find(i=>i.id===editingId); Object.assign(idea,draft); target=idea; }
+  else { target={id:uid(),...draft}; ideas.unshift(target); }
+  render(); closePanel();
+  saveIdea(target, ideas.indexOf(target));
+};
+document.getElementById('deleteBtn').onclick=()=>{
+  if(editingId){ const id=editingId; ideas=ideas.filter(i=>i.id!==id); render(); closePanel(); deleteIdea(id); }
+};
+
+const DENSITY_NAMES = { 1:'Minimal', 2:'Dense', 3:'Compact', 4:'Comfortable', 5:'Roomy' };
+const densityEl = document.getElementById('density');
+const dvalEl = document.getElementById('dval');
+function applyDensity(v, persist){
+  document.getElementById('grid').dataset.density = v;
+  dvalEl.textContent = DENSITY_NAMES[v];
+  densityEl.value = v;
+  if (persist) { try { localStorage.setItem('cutlist:density', String(v)); } catch(e){} }
+}
+densityEl.addEventListener('input', e => applyDensity(e.target.value, true));
+
+async function loadDensity(){
+  try { const r = localStorage.getItem('cutlist:density'); if (r) applyDensity(r, false); }
+  catch(e){}
+}
+
+load();
+loadDensity();
+</script>
+</body>
+</html>
