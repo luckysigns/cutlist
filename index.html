@@ -57,16 +57,24 @@
   .stat b { font-size: 22px; font-weight: 800; font-family: 'Spline Sans Mono', monospace; }
   .stat small { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
 
+  /* ---------- project tabs bar ---------- */
+  .projbar { display: flex; align-items: center; gap: 8px; padding: 12px 26px; border-bottom: 1px solid var(--edge-soft);
+    background: rgba(14,15,19,0.4); overflow-x: auto; }
+  .proj-tab { display: flex; align-items: center; gap: 8px; border: 1px solid var(--edge); background: var(--panel);
+    color: var(--muted); font-family: inherit; font-weight: 700; font-size: 13px; padding: 8px 14px; border-radius: 10px;
+    cursor: pointer; white-space: nowrap; transition: all .15s; }
+  .proj-tab:hover { color: var(--text); border-color: var(--dim); }
+  .proj-tab.active { color: var(--text); background: var(--panel-2); border-color: var(--projcolor, var(--dim)); }
+  .proj-tab .pj-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--projcolor, var(--dim)); flex-shrink: 0; }
+  .proj-tab .pj-count { font-family: 'Spline Sans Mono', monospace; font-size: 11px; color: var(--dim);
+    background: var(--ink); padding: 1px 7px; border-radius: 20px; }
+
   .grid { display: grid; gap: 11px; transition: gap .2s; }
   .idea { position: relative; background: var(--panel-2); border: 1px solid var(--edge); border-radius: 12px; padding: 0; overflow: hidden;
     cursor: pointer; transition: transform .14s, box-shadow .16s, border-color .16s; }
   .idea:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.4); border-color: var(--dim); }
-  /* platform = thin left edge-stripe */
-  .idea::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; z-index: 1; }
-  .pf-youtube::before { background: var(--yt); }
-  .pf-tiktok::before { background: linear-gradient(180deg, var(--tt), var(--tt2)); }
-  .pf-short::before { background: linear-gradient(180deg, var(--yt), var(--pink)); }
-  .pf-both::before { background: linear-gradient(180deg, var(--yt) 0%, var(--yt) 48%, var(--tt) 52%, var(--tt2) 100%); }
+  /* platform = thin left edge-stripe -> now VIDEO TYPE color */
+  .idea::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; z-index: 1; background: var(--typecolor, var(--dim)); }
   .idea-pad { padding: 11px 13px 12px 15px; }
   .pf-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; letter-spacing: 0.05em;
     text-transform: uppercase; padding: 3px 7px; border-radius: 6px; margin-bottom: 8px; }
@@ -75,6 +83,43 @@
   .pf-short .pf-badge { background: rgba(255,111,181,0.14); color: var(--pink); }
   .pf-both .pf-badge { background: rgba(255,255,255,0.08); color: var(--text); }
   .pf-badge svg { width: 12px; height: 12px; }
+  .badge-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .badge-row .pf-badge { margin-bottom: 0; }
+  .proj-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 6px; color: var(--projcolor);
+    background: color-mix(in srgb, var(--projcolor) 16%, transparent); }
+  .proj-pill .pj-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--projcolor); }
+  .prio-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 6px; color: var(--priocolor);
+    background: color-mix(in srgb, var(--priocolor) 18%, transparent); }
+  .prio-pill .pr-tick { width: 7px; height: 7px; border-radius: 2px; background: var(--priocolor); }
+  .type-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 6px; color: var(--typecolor);
+    background: color-mix(in srgb, var(--typecolor) 18%, transparent); }
+  .type-pill .ty-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--typecolor); }
+  /* archive section */
+  .archive { margin-top: 30px; }
+  .archive-head { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: 0;
+    border-top: 1px solid var(--edge-soft); padding: 18px 2px 14px; cursor: pointer; color: var(--muted);
+    font-family: inherit; font-weight: 700; font-size: 13px; letter-spacing: 0.03em; text-transform: uppercase; }
+  .archive-head:hover { color: var(--text); }
+  .arch-caret { width: 16px; height: 16px; transition: transform .2s; }
+  .archive.collapsed .arch-caret { transform: rotate(-90deg); }
+  .arch-count { font-family: 'Spline Sans Mono', monospace; font-size: 11px; color: var(--dim);
+    background: var(--ink); padding: 2px 9px; border-radius: 20px; text-transform: none; letter-spacing: 0; }
+  .archive.collapsed .archive-grid { display: none; }
+  .idea.archived { opacity: .72; }
+  .idea.archived:hover { opacity: 1; }
+  .prio-high { } .prio-med { } .prio-low { }
+  /* drag states */
+  .idea.dragging { opacity: .45; }
+  .idea.drop-before { box-shadow: -3px 0 0 0 var(--signal), 0 0 0 1px var(--signal) inset; }
+  .idea.drop-after { box-shadow: 3px 0 0 0 var(--signal), 0 0 0 1px var(--signal) inset; }
+  .idea { cursor: grab; }
+  .idea:active { cursor: grabbing; }
+  /* priority option in panel */
+  #prioSelect .pf-opt.sel { border-color: var(--priocolor); color: var(--priocolor); background: color-mix(in srgb, var(--priocolor) 13%, transparent); }
+  #prioSelect .pf-opt .pr-tick { width: 9px; height: 9px; border-radius: 2px; background: var(--priocolor); }
   .idea h3 { font-size: 14px; font-weight: 700; line-height: 1.25; margin-bottom: 7px; letter-spacing: -0.01em; }
   .idea-note { font-size: 12px; color: var(--muted); line-height: 1.4; margin-bottom: 10px;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -122,8 +167,11 @@
   .grid[data-density="1"] .idea-note,
   .grid[data-density="1"] .idea-foot,
   .grid[data-density="1"] .pf-badge,
-  .grid[data-density="1"] .color-flag { display: none; }
+  .grid[data-density="1"] .proj-pill,
+  .grid[data-density="1"] .prio-pill,
+  .grid[data-density="1"] .type-pill { display: none; }
   .grid[data-density="1"] .idea { border-radius: 9px; }
+  .grid[data-density="1"] .badge-row { display: none; }
   .grid[data-density="1"] .idea-pad { padding: 9px 10px 9px 12px; }
   .grid[data-density="1"] .stage-dot { display: block; }
   .grid[data-density="1"] .idea h3 { font-size: 12.5px; line-height: 1.3;
@@ -147,6 +195,8 @@
   .titleInput:focus { outline: none; }
   .seg-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
   .pf-select { display: flex; gap: 8px; flex-wrap: wrap; }
+  #projSelect .pf-opt.sel { border-color: var(--projcolor); color: var(--projcolor); background: color-mix(in srgb, var(--projcolor) 12%, transparent); }
+  #projSelect .pf-opt .pj-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--projcolor); }
   .pf-opt { display: flex; align-items: center; gap: 7px; cursor: pointer; border: 1px solid var(--edge); background: var(--ink);
     color: var(--muted); padding: 8px 13px; border-radius: 10px; font-size: 12.5px; font-weight: 700; transition: all .15s; }
   .pf-opt svg { width: 14px; height: 14px; }
@@ -179,6 +229,29 @@
   textarea:focus { outline: none; border-color: var(--signal); }
   .swatches { display: flex; gap: 9px; }
   .swatch { width: 28px; height: 28px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: transform .12s; }
+  /* video type picker */
+  .manage-types { float: right; background: transparent; border: 0; color: var(--blue); font-family: inherit;
+    font-size: 11px; font-weight: 700; cursor: pointer; text-transform: none; letter-spacing: 0; }
+  .manage-types:hover { text-decoration: underline; }
+  .type-select { display: flex; gap: 8px; flex-wrap: wrap; }
+  .type-opt { display: flex; align-items: center; gap: 7px; cursor: pointer; border: 1px solid var(--edge); background: var(--ink);
+    color: var(--muted); padding: 8px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 700; transition: all .15s; }
+  .type-opt .ty-dot { width: 11px; height: 11px; border-radius: 50%; }
+  .type-opt.sel { border-color: var(--tc); color: var(--tc); background: color-mix(in srgb, var(--tc) 13%, transparent); }
+  .type-editor { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px;
+    background: var(--ink); border: 1px solid var(--edge); border-radius: 12px; }
+  .te-row { display: flex; align-items: center; gap: 8px; }
+  .te-row input[type=text] { flex: 1; background: var(--panel); border: 1px solid var(--edge); color: var(--text);
+    border-radius: 8px; padding: 8px 10px; font-family: inherit; font-size: 13px; }
+  .te-row input[type=text]:focus { outline: none; border-color: var(--signal); }
+  .te-colors { display: flex; gap: 5px; }
+  .te-sw { width: 20px; height: 20px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; }
+  .te-sw.sel { border-color: #fff; }
+  .te-del { background: transparent; border: 0; color: var(--dim); cursor: pointer; font-size: 16px; }
+  .te-del:hover { color: var(--signal); }
+  .te-add { background: transparent; border: 1px dashed var(--edge); color: var(--muted); border-radius: 9px;
+    padding: 8px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 700; }
+  .te-add:hover { border-color: var(--dim); color: var(--text); }
   .swatch:hover { transform: scale(1.12); }
   .swatch.sel { border-color: #fff; }
   .checklist { display: flex; flex-direction: column; gap: 8px; }
@@ -238,9 +311,19 @@
   <button class="add-btn" id="newBtn">+ New idea</button>
 </header>
 
+<nav class="projbar" id="projbar"></nav>
+
 <main>
   <div class="stats" id="stats"></div>
   <div class="grid" id="grid" data-density="4"></div>
+  <section class="archive" id="archiveSection" style="display:none">
+    <button class="archive-head" id="archiveToggle">
+      <svg class="arch-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <span>Posted / Archived</span>
+      <span class="arch-count" id="archiveCount">0</span>
+    </button>
+    <div class="grid archive-grid" id="archiveGrid" data-density="4"></div>
+  </section>
 </main>
 
 <div class="density-bar">
@@ -258,6 +341,10 @@
     </div>
     <div class="panel-body">
       <div class="field-block">
+        <div class="seg-label">Project</div>
+        <div class="pf-select" id="projSelect"></div>
+      </div>
+      <div class="field-block">
         <div class="seg-label">Platform</div>
         <div class="pf-select" id="pfSelect">
           <div class="pf-opt" data-on="yt"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.5a3 3 0 0 0-2.1-2.1C19 5 12 5 12 5s-7 0-8.9.4A3 3 0 0 0 1 7.5 31 31 0 0 0 .6 12 31 31 0 0 0 1 16.5a3 3 0 0 0 2.1 2.1C5 19 12 19 12 19s7 0 8.9-.4a3 3 0 0 0 2.1-2.1A31 31 0 0 0 23.4 12 31 31 0 0 0 23 7.5zM9.8 15.3V8.7l5.7 3.3z"/></svg>YouTube</div>
@@ -265,6 +352,10 @@
           <div class="pf-opt" data-on="short">YT Short</div>
           <div class="pf-opt" data-on="both">Both</div>
         </div>
+      </div>
+      <div class="field-block">
+        <div class="seg-label">Priority</div>
+        <div class="pf-select" id="prioSelect"></div>
       </div>
       <div class="field-block">
         <div class="seg-label">Stage — tap to set where it's at</div>
@@ -275,8 +366,9 @@
         <textarea id="fNote" placeholder="Hook, angle, references, gear needed..."></textarea>
       </div>
       <div class="field-block">
-        <div class="seg-label">Color tag</div>
-        <div class="swatches" id="swatches"></div>
+        <div class="seg-label">Video type <button class="manage-types" id="manageTypes" type="button">Edit types</button></div>
+        <div class="type-select" id="typeSelect"></div>
+        <div class="type-editor" id="typeEditor" style="display:none"></div>
       </div>
       <div class="field-block">
         <div class="seg-label">Checklist</div>
@@ -300,7 +392,27 @@ const STAGES = [
   { id: 'scheduled', name: 'Scheduled', color: '#ff6fb5' },
   { id: 'posted', name: 'Posted', color: '#38d39f' },
 ];
-const COLORS = ['#ff4d3d','#ffb340','#38d39f','#4d9fff','#b388ff','#ff6fb5'];
+const COLORS = ['#ff4d3d','#ffb340','#38d39f','#4d9fff','#b388ff','#ff6fb5','#25f4ee','#ffffff'];
+
+// ---- Video types (user-nameable color tags) ----
+const DEFAULT_TYPES = [
+  { id:'t1', name:'Vlog',       color:'#4d9fff' },
+  { id:'t2', name:'Tutorial',   color:'#ffb340' },
+  { id:'t3', name:'Short-form', color:'#ff6fb5' },
+  { id:'t4', name:'Review',     color:'#38d39f' },
+];
+let TYPES = [];
+function loadTypesLocal(){
+  try { const r=localStorage.getItem('cutlist:types'); TYPES = r?JSON.parse(r):JSON.parse(JSON.stringify(DEFAULT_TYPES)); }
+  catch { TYPES = JSON.parse(JSON.stringify(DEFAULT_TYPES)); }
+  if(!TYPES.length) TYPES = JSON.parse(JSON.stringify(DEFAULT_TYPES));
+}
+function saveTypes(){
+  try { localStorage.setItem('cutlist:types', JSON.stringify(TYPES)); } catch(e){}
+  if (sb) { sb.from('cutlist_meta').upsert({ key:'types', value: TYPES, updated_at:new Date().toISOString() }).then(()=>{}, e=>console.error('types sync',e)); }
+}
+const typeOf = id => TYPES.find(t=>t.id===id) || TYPES[0] || {id:'t1',name:'Untyped',color:'#5a5f72'};
+const tuid = () => 't'+Math.random().toString(36).slice(2,7);
 const PF = {
   YouTube: { key:'youtube', cls:'pf-youtube', label:'YouTube', on:'yt' },
   TikTok: { key:'tiktok', cls:'pf-tiktok', label:'TikTok', on:'tt' },
@@ -308,11 +420,22 @@ const PF = {
   Both: { key:'both', cls:'pf-both', label:'YT + TikTok', on:'both' },
 };
 const PF_FROM_ON = { yt:'YouTube', tt:'TikTok', short:'YouTube Short', both:'Both' };
+const PROJECTS = [
+  { id: 'lucky',     name: "Lucky Livin'",     color: '#38d39f' },
+  { id: 'honeymoon', name: 'Honeymoon Chaser', color: '#ff6fb5' },
+];
+const projOf = id => PROJECTS.find(p => p.id === id) || PROJECTS[0];
+const PRIORITIES = [
+  { id: 'high', name: 'High', color: '#ff4d3d' },
+  { id: 'med',  name: 'Med',  color: '#ffb340' },
+  { id: 'low',  name: 'Low',  color: '#5a5f72' },
+];
+const prioOf = id => PRIORITIES.find(p => p.id === id) || PRIORITIES[1];
 const ICON_YT = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.5a3 3 0 0 0-2.1-2.1C19 5 12 5 12 5s-7 0-8.9.4A3 3 0 0 0 1 7.5 31 31 0 0 0 .6 12 31 31 0 0 0 1 16.5a3 3 0 0 0 2.1 2.1C5 19 12 19 12 19s7 0 8.9-.4a3 3 0 0 0 2.1-2.1A31 31 0 0 0 23.4 12 31 31 0 0 0 23 7.5zM9.8 15.3V8.7l5.7 3.3z"/></svg>';
 const ICON_TT = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-1-2.8h-3v12.2a2.6 2.6 0 1 1-2.6-2.6c.27 0 .53.04.78.12V9.6a5.7 5.7 0 0 0-.78-.06 5.6 5.6 0 1 0 5.6 5.6V9.3a7.2 7.2 0 0 0 4.2 1.34V7.6a4.3 4.3 0 0 1-3.2-1.8z"/></svg>';
 const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg>';
 
-let ideas = [], editingId = null, draft = null, filter = 'all';
+let ideas = [], editingId = null, draft = null, filter = 'all', projectFilter = 'all';
 
 // ---------- Supabase (cross-device sync) ----------
 const SUPABASE_URL = 'https://ywjtbzxfdudrqsvsslzs.supabase.co';
@@ -331,11 +454,15 @@ function setSync(state, txt){
 const toRow = (idea, i=0) => ({
   id: idea.id, title: idea.title, platform: idea.platform, stage: idea.stage,
   note: idea.note, color: idea.color, checklist: idea.checklist || [],
+  project: idea.project || 'lucky', priority: idea.priority || 'med',
+  vtype: idea.vtype || (TYPES[0] && TYPES[0].id) || 't1',
   position: i, updated_at: new Date().toISOString()
 });
 const fromRow = r => ({
   id: r.id, title: r.title, platform: r.platform, stage: r.stage,
-  note: r.note, color: r.color, checklist: r.checklist || []
+  note: r.note, color: r.color, checklist: r.checklist || [],
+  project: r.project || 'lucky', priority: r.priority || 'med',
+  vtype: r.vtype || (TYPES[0] && TYPES[0].id) || 't1'
 });
 
 function cacheLocal(){ try { localStorage.setItem('cutlist:ideas', JSON.stringify(ideas)); } catch(e){} }
@@ -343,21 +470,32 @@ function cacheLocal(){ try { localStorage.setItem('cutlist:ideas', JSON.stringif
 async function load() {
   // 1) instant: show local cache if we have one
   try { const r = localStorage.getItem('cutlist:ideas'); ideas = r ? JSON.parse(r) : []; } catch { ideas = []; }
+  loadTypesLocal();
   render();
   // 2) pull from cloud
   if (sb) {
     setSync('syncing', 'Syncing…');
     try {
+      // types first (so cards color correctly)
+      try {
+        const { data: meta } = await sb.from('cutlist_meta').select('*').eq('key','types').maybeSingle();
+        if (meta && Array.isArray(meta.value) && meta.value.length) {
+          TYPES = meta.value;
+          try { localStorage.setItem('cutlist:types', JSON.stringify(TYPES)); } catch(e){}
+        } else {
+          // push our local/default types up so cloud has them
+          sb.from('cutlist_meta').upsert({ key:'types', value: TYPES, updated_at:new Date().toISOString() });
+        }
+      } catch(te){ console.error('types load', te); }
+
       const { data, error } = await sb.from(TABLE).select('*').order('position', { ascending: true });
       if (error) throw error;
       if (data && data.length) {
         ideas = data.map(fromRow);
         cacheLocal(); render();
       } else if (!ideas.length) {
-        // empty cloud + empty local => first run: seed and push up
         seedLocalOnly(); await pushAll();
       } else {
-        // cloud empty but we have local cache => push local up
         await pushAll();
       }
       setSync('ok', 'Synced');
@@ -406,15 +544,24 @@ async function pushAll(){
   } catch(e){ console.error('pushAll failed', e); setSync('err', 'Offline'); }
 }
 
+// persist new order after a drag (debounced)
+let orderTimer = null;
+function persistOrder(){
+  cacheLocal();
+  if (!sb) return;
+  clearTimeout(orderTimer);
+  orderTimer = setTimeout(pushAll, 400);
+}
+
 function seedLocalOnly() {
   ideas = [
-    { id:uid(), title:'Channel trailer refresh', platform:'YouTube', stage:'idea',
-      note:'New intro that explains the channel in under 30s. Punchier hook.', color:'#b388ff',
+    { id:uid(), title:'Channel trailer refresh', platform:'YouTube', stage:'idea', project:'lucky', priority:'high', vtype:'t1',
+      note:'New intro that explains the channel in under 30s. Punchier hook.', color:'#4d9fff',
       checklist:[{t:'Write 3 hook options',d:false},{t:'Pull b-roll',d:false}] },
-    { id:uid(), title:'Day in the life — edit day', platform:'TikTok', stage:'filming',
-      note:'Vertical, fast cuts, trending audio. Keep it raw.', color:'#ff4d3d',
+    { id:uid(), title:'Day in the life — edit day', platform:'TikTok', stage:'filming', project:'lucky', priority:'med', vtype:'t3',
+      note:'Vertical, fast cuts, trending audio. Keep it raw.', color:'#ff6fb5',
       checklist:[{t:'Film morning setup',d:true},{t:'Film timelapse',d:false},{t:'Grab voiceover',d:false}] },
-    { id:uid(), title:'Gear setup tour 2026', platform:'Both', stage:'editing',
+    { id:uid(), title:'Honeymoon destination teaser', platform:'Both', stage:'editing', project:'honeymoon', priority:'high', vtype:'t2',
       note:'Long-form for YT, cut a 60s vertical for TikTok.', color:'#ffb340',
       checklist:[{t:'Color grade',d:true},{t:'Add captions',d:true},{t:'Export vertical cut',d:false}] },
   ];
@@ -425,13 +572,36 @@ function progress(idea){ const l=idea.checklist||[]; if(!l.length) return {done:
 const stageOf = id => STAGES.find(s=>s.id===id) || STAGES[0];
 const esc = s => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-function render(){ renderStats(); renderGrid(); }
+function render(){ renderProjbar(); renderStats(); renderGrid(); }
+
+function renderProjbar(){
+  const bar=document.getElementById('projbar');
+  const inScope = i => {
+    if(filter==='all') return true;
+    if(filter==='youtube') return PF[i.platform]?.key==='youtube'||i.platform==='Both';
+    if(filter==='tiktok') return i.platform==='TikTok'||i.platform==='Both';
+    return true;
+  };
+  const tabs = [{ id:'all', name:'All', color:'#8a8fa3' }, ...PROJECTS];
+  bar.innerHTML = tabs.map(t=>{
+    const count = t.id==='all'
+      ? ideas.filter(inScope).length
+      : ideas.filter(i=>(i.project||'lucky')===t.id && inScope(i)).length;
+    const dot = t.id==='all' ? '' : `<span class="pj-dot"></span>`;
+    return `<button class="proj-tab${projectFilter===t.id?' active':''}" data-p="${t.id}" style="--projcolor:${t.color}">${dot}${t.name}<span class="pj-count">${count}</span></button>`;
+  }).join('');
+  bar.querySelectorAll('.proj-tab').forEach(btn=>{
+    btn.onclick=()=>{ projectFilter=btn.dataset.p; render(); };
+  });
+}
+
 function renderStats(){
-  const total=ideas.length;
-  const posted=ideas.filter(i=>i.stage==='posted').length;
-  const prod=ideas.filter(i=>['filming','editing'].includes(i.stage)).length;
-  const yt=ideas.filter(i=>PF[i.platform]?.key==='youtube'||i.platform==='Both').length;
-  const tt=ideas.filter(i=>i.platform==='TikTok'||i.platform==='Both').length;
+  const scope = ideas.filter(i=> projectFilter==='all' ? true : (i.project||'lucky')===projectFilter);
+  const total=scope.length;
+  const posted=scope.filter(i=>i.stage==='posted').length;
+  const prod=scope.filter(i=>['filming','editing'].includes(i.stage)).length;
+  const yt=scope.filter(i=>PF[i.platform]?.key==='youtube'||i.platform==='Both').length;
+  const tt=scope.filter(i=>i.platform==='TikTok'||i.platform==='Both').length;
   document.getElementById('stats').innerHTML =
     `<div class="stat"><b>${total}</b><small>ideas</small></div>
      <div class="stat"><b style="color:#ff7a70">${yt}</b><small>youtube</small></div>
@@ -439,44 +609,137 @@ function renderStats(){
      <div class="stat"><b style="color:var(--signal)">${prod}</b><small>in production</small></div>
      <div class="stat"><b style="color:var(--green)">${posted}</b><small>posted</small></div>`;
 }
+function buildCard(idea, archived){
+  const pf=PF[idea.platform]||PF.YouTube, st=stageOf(idea.stage), p=progress(idea), pj=projOf(idea.project), pr=prioOf(idea.priority), vt=typeOf(idea.vtype);
+  const badgeIcon = pf.key==='tiktok'?ICON_TT : pf.key==='both'?ICON_YT+ICON_TT : ICON_YT;
+  const accent = vt.color; // card accent now driven by VIDEO TYPE
+  const card=document.createElement('div');
+  card.className='idea '+pf.cls+(archived?' archived':'');
+  card.draggable = !archived;
+  card.dataset.id=idea.id;
+  card.style.setProperty('--projcolor', pj.color);
+  card.style.setProperty('--priocolor', pr.color);
+  card.style.setProperty('--typecolor', accent);
+  card.innerHTML=
+    `<div class="idea-pad">
+       <div class="badge-row">
+         <span class="type-pill"><span class="ty-dot"></span>${esc(vt.name)}</span>
+         <span class="prio-pill prio-${pr.id}"><span class="pr-tick"></span>${pr.name}</span>
+         <span class="proj-pill"><span class="pj-dot"></span>${esc(pj.name)}</span>
+         <span class="pf-badge">${badgeIcon}${pf.label}</span>
+       </div>
+       <div class="idea-head"><span class="stage-dot" style="background:${st.color}" title="${st.name}"></span><h3>${esc(idea.title)}</h3></div>
+       ${idea.note?`<div class="idea-note">${esc(idea.note)}</div>`:''}
+       <div class="idea-foot">
+         <span class="stage-chip"><span class="st-tick" style="background:${st.color}"></span>${st.name}</span>
+         <div class="task-mini">
+           ${p.total?`<div class="progress-mini"><i style="width:${p.pct}%;background:${st.color}"></i></div><span class="label">${p.done}/${p.total}</span>`:`<span class="label">no tasks</span>`}
+         </div>
+       </div>
+     </div>`;
+  card.onclick=(e)=>{ if(!card.classList.contains('was-dragged')) openPanel(idea.id); card.classList.remove('was-dragged'); };
+  if(!archived) attachDrag(card);
+  return card;
+}
+
 function renderGrid(){
   const grid=document.getElementById('grid'); grid.innerHTML='';
-  const list=ideas.filter(i=>{
+  const archGrid=document.getElementById('archiveGrid'); archGrid.innerHTML='';
+  const inScope = i => {
+    if(projectFilter!=='all' && (i.project||'lucky')!==projectFilter) return false;
     if(filter==='all') return true;
     if(filter==='youtube') return PF[i.platform]?.key==='youtube'||i.platform==='Both';
     if(filter==='tiktok') return i.platform==='TikTok'||i.platform==='Both';
     return true;
+  };
+  const active = ideas.filter(i=> inScope(i) && i.stage!=='posted');
+  const posted = ideas.filter(i=> inScope(i) && i.stage==='posted');
+
+  if(!active.length){ grid.innerHTML=`<div class="empty-grid">No active ideas here. Hit “New idea” to capture one.</div>`; }
+  else active.forEach(idea=> grid.appendChild(buildCard(idea, false)));
+
+  const sec=document.getElementById('archiveSection');
+  if(posted.length){
+    sec.style.display='block';
+    document.getElementById('archiveCount').textContent = posted.length;
+    posted.forEach(idea=> archGrid.appendChild(buildCard(idea, true)));
+  } else {
+    sec.style.display='none';
+  }
+}
+
+// ---------- drag to reorder ----------
+let dragId = null;
+function attachDrag(card){
+  card.addEventListener('dragstart', e=>{
+    dragId = card.dataset.id;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed='move';
+    try{ e.dataTransfer.setData('text/plain', dragId); }catch(_){}
   });
-  if(!list.length){ grid.innerHTML=`<div class="empty-grid">No ideas here yet. Hit “New idea” to capture one.</div>`; return; }
-  list.forEach(idea=>{
-    const pf=PF[idea.platform]||PF.YouTube, st=stageOf(idea.stage), p=progress(idea);
-    const badgeIcon = pf.key==='tiktok'?ICON_TT : pf.key==='both'?ICON_YT+ICON_TT : ICON_YT;
-    const card=document.createElement('div');
-    card.className='idea '+pf.cls;
-    card.innerHTML=
-      `<div class="color-flag" style="background:${idea.color}"></div>
-       <div class="idea-pad">
-         <span class="pf-badge">${badgeIcon}${pf.label}</span>
-         <div class="idea-head"><span class="stage-dot" style="background:${st.color}" title="${st.name}"></span><h3>${esc(idea.title)}</h3></div>
-         ${idea.note?`<div class="idea-note">${esc(idea.note)}</div>`:''}
-         <div class="idea-foot">
-           <span class="stage-chip"><span class="st-tick" style="background:${st.color}"></span>${st.name}</span>
-           <div class="task-mini">
-             ${p.total?`<div class="progress-mini"><i style="width:${p.pct}%;background:${st.color}"></i></div><span class="label">${p.done}/${p.total}</span>`:`<span class="label">no tasks</span>`}
-           </div>
-         </div>
-       </div>`;
-    card.onclick=()=>openPanel(idea.id);
-    grid.appendChild(card);
+  card.addEventListener('dragend', ()=>{
+    card.classList.remove('dragging');
+    card.classList.add('was-dragged'); // suppress the click that fires after drop
+    document.querySelectorAll('.idea.drop-before,.idea.drop-after').forEach(c=>c.classList.remove('drop-before','drop-after'));
   });
+  card.addEventListener('dragover', e=>{
+    e.preventDefault();
+    if(card.dataset.id===dragId) return;
+    const r=card.getBoundingClientRect();
+    const after = (e.clientY - r.top) > r.height/2;
+    card.classList.toggle('drop-after', after);
+    card.classList.toggle('drop-before', !after);
+  });
+  card.addEventListener('dragleave', ()=> card.classList.remove('drop-before','drop-after'));
+  card.addEventListener('drop', e=>{
+    e.preventDefault();
+    const targetId=card.dataset.id;
+    const after = card.classList.contains('drop-after');
+    card.classList.remove('drop-before','drop-after');
+    if(!dragId || dragId===targetId) return;
+    reorder(dragId, targetId, after);
+  });
+}
+function reorder(fromId, toId, after){
+  const from=ideas.findIndex(i=>i.id===fromId);
+  if(from<0) return;
+  const [moved]=ideas.splice(from,1);
+  let to=ideas.findIndex(i=>i.id===toId);
+  if(to<0){ ideas.splice(from,0,moved); return; }
+  to = after ? to+1 : to;
+  ideas.splice(to,0,moved);
+  render();
+  persistOrder();
 }
 document.getElementById('filters').addEventListener('click', e=>{
   const btn=e.target.closest('button'); if(!btn) return;
   filter=btn.dataset.f;
   [...document.querySelectorAll('#filters button')].forEach(b=>b.classList.toggle('active', b===btn));
-  renderGrid();
+  render();
 });
 
+function renderProjectSelect(){
+  const wrap=document.getElementById('projSelect'); wrap.innerHTML='';
+  PROJECTS.forEach(p=>{
+    const opt=document.createElement('div');
+    opt.className='pf-opt'+(draft.project===p.id?' sel':'');
+    opt.style.setProperty('--projcolor', p.color);
+    opt.innerHTML=`<span class="pj-dot"></span>${esc(p.name)}`;
+    opt.onclick=()=>{ draft.project=p.id; renderProjectSelect(); };
+    wrap.appendChild(opt);
+  });
+}
+function renderPrioritySelect(){
+  const wrap=document.getElementById('prioSelect'); wrap.innerHTML='';
+  PRIORITIES.forEach(p=>{
+    const opt=document.createElement('div');
+    opt.className='pf-opt prio-opt'+(draft.priority===p.id?' sel':'');
+    opt.style.setProperty('--priocolor', p.color);
+    opt.innerHTML=`<span class="pr-tick"></span>${p.name}`;
+    opt.onclick=()=>{ draft.priority=p.id; renderPrioritySelect(); };
+    wrap.appendChild(opt);
+  });
+}
 function renderPlatformSelect(){
   document.querySelectorAll('#pfSelect .pf-opt').forEach(opt=>{
     opt.classList.toggle('sel', PF_FROM_ON[opt.dataset.on]===draft.platform);
@@ -495,24 +758,54 @@ function renderPipeline(){
   const wrap=document.getElementById('pipeline'); wrap.innerHTML='';
   const curIdx=STAGES.findIndex(s=>s.id===draft.stage);
   STAGES.forEach((s,i)=>{
-    const done=i<curIdx, current=i===curIdx;
+    const isPosted = s.id==='posted';
+    const done = i<curIdx || (isPosted && draft.stage==='posted');
+    const current = i===curIdx;
     const row=document.createElement('div');
     row.className='pipe-stage'+(done?' done':'')+(current?' current':'');
     row.style.setProperty('--stagecolor', s.color);
-    row.innerHTML=`<div class="pipe-node">${ICON_CHECK}</div><div class="pipe-label">${s.name}</div><div class="pipe-tag">Now</div>`;
+    const tag = (isPosted && current) ? 'Archives ✓' : 'Now';
+    row.innerHTML=`<div class="pipe-node">${ICON_CHECK}</div><div class="pipe-label">${s.name}</div><div class="pipe-tag">${tag}</div>`;
     row.onclick=()=>{ draft.stage=s.id; renderPipeline(); };
     wrap.appendChild(row);
   });
 }
-function renderSwatches(){
-  const wrap=document.getElementById('swatches'); wrap.innerHTML='';
-  COLORS.forEach(c=>{
-    const sw=document.createElement('div');
-    sw.className='swatch'+(c===draft.color?' sel':'');
-    sw.style.background=c;
-    sw.onclick=()=>{ draft.color=c; renderSwatches(); };
-    wrap.appendChild(sw);
+function renderTypeSelect(){
+  const wrap=document.getElementById('typeSelect'); wrap.innerHTML='';
+  if(!draft.vtype || !TYPES.find(t=>t.id===draft.vtype)) draft.vtype = TYPES[0]?.id;
+  TYPES.forEach(t=>{
+    const opt=document.createElement('div');
+    opt.className='type-opt'+(draft.vtype===t.id?' sel':'');
+    opt.style.setProperty('--tc', t.color);
+    opt.innerHTML=`<span class="ty-dot" style="background:${t.color}"></span>${esc(t.name)}`;
+    opt.onclick=()=>{ draft.vtype=t.id; draft.color=t.color; renderTypeSelect(); };
+    wrap.appendChild(opt);
   });
+}
+let typeEditorOpen=false;
+function renderTypeEditor(){
+  const box=document.getElementById('typeEditor');
+  box.style.display = typeEditorOpen ? 'flex' : 'none';
+  document.getElementById('manageTypes').textContent = typeEditorOpen ? 'Done' : 'Edit types';
+  if(!typeEditorOpen){ box.innerHTML=''; return; }
+  box.innerHTML='';
+  TYPES.forEach((t,i)=>{
+    const row=document.createElement('div'); row.className='te-row';
+    const colors=COLORS.map(c=>`<span class="te-sw${t.color===c?' sel':''}" data-c="${c}" style="background:${c}"></span>`).join('');
+    row.innerHTML=`<input type="text" value="${esc(t.name)}" placeholder="Type name"><div class="te-colors">${colors}</div><button class="te-del" title="Remove">×</button>`;
+    row.querySelector('input').oninput=e=>{ TYPES[i].name=e.target.value; saveTypes(); renderTypeSelect(); };
+    row.querySelectorAll('.te-sw').forEach(sw=>{
+      sw.onclick=()=>{ TYPES[i].color=sw.dataset.c; if(draft.vtype===t.id) draft.color=sw.dataset.c; saveTypes(); renderTypeEditor(); renderTypeSelect(); };
+    });
+    row.querySelector('.te-del').onclick=()=>{
+      if(TYPES.length<=1) return; // keep at least one
+      TYPES.splice(i,1); saveTypes(); renderTypeEditor(); renderTypeSelect();
+    };
+    box.appendChild(row);
+  });
+  const add=document.createElement('button'); add.className='te-add'; add.textContent='+ Add type';
+  add.onclick=()=>{ TYPES.push({id:tuid(), name:'New type', color:COLORS[(TYPES.length)%COLORS.length]}); saveTypes(); renderTypeEditor(); renderTypeSelect(); };
+  box.appendChild(add);
 }
 function renderChecklist(){
   const wrap=document.getElementById('checklist'); wrap.innerHTML='';
@@ -531,14 +824,20 @@ document.getElementById('addCheck').onclick=()=>{ draft.checklist.push({t:'',d:f
 function openPanel(id){
   editingId=id||null;
   const idea=id?ideas.find(i=>i.id===id):null;
-  draft=idea?JSON.parse(JSON.stringify(idea)):{title:'',platform:'YouTube',stage:'idea',note:'',color:COLORS[0],checklist:[]};
+  const defaultProject = (projectFilter!=='all') ? projectFilter : 'lucky';
+  draft=idea?JSON.parse(JSON.stringify(idea)):{title:'',platform:'YouTube',stage:'idea',note:'',color:(TYPES[0]&&TYPES[0].color)||COLORS[0],checklist:[],project:defaultProject,priority:'med',vtype:(TYPES[0]&&TYPES[0].id)||'t1'};
+  if(!draft.project) draft.project='lucky';
+  if(!draft.priority) draft.priority='med';
+  if(!draft.vtype) draft.vtype=(TYPES[0]&&TYPES[0].id)||'t1';
+  typeEditorOpen=false;
   document.getElementById('fTitle').value=draft.title;
   document.getElementById('fNote').value=draft.note;
   document.getElementById('deleteBtn').style.display=idea?'block':'none';
-  renderPlatformSelect(); updateBanner(); renderPipeline(); renderSwatches(); renderChecklist();
+  renderProjectSelect(); renderPrioritySelect(); renderPlatformSelect(); updateBanner(); renderPipeline(); renderTypeSelect(); renderTypeEditor(); renderChecklist();
   document.getElementById('scrim').classList.add('open');
   if(!idea) setTimeout(()=>document.getElementById('fTitle').focus(),250);
 }
+document.getElementById('manageTypes').onclick=()=>{ typeEditorOpen=!typeEditorOpen; renderTypeEditor(); };
 function closePanel(){ document.getElementById('scrim').classList.remove('open'); editingId=null; draft=null; }
 
 document.getElementById('fTitle').oninput=e=>{ if(draft) draft.title=e.target.value; };
@@ -567,11 +866,20 @@ const densityEl = document.getElementById('density');
 const dvalEl = document.getElementById('dval');
 function applyDensity(v, persist){
   document.getElementById('grid').dataset.density = v;
+  const ag=document.getElementById('archiveGrid'); if(ag) ag.dataset.density = v;
   dvalEl.textContent = DENSITY_NAMES[v];
   densityEl.value = v;
   if (persist) { try { localStorage.setItem('cutlist:density', String(v)); } catch(e){} }
 }
 densityEl.addEventListener('input', e => applyDensity(e.target.value, true));
+
+// archive collapse toggle (remembers state)
+const archEl = document.getElementById('archiveSection');
+document.getElementById('archiveToggle').onclick = ()=>{
+  archEl.classList.toggle('collapsed');
+  try { localStorage.setItem('cutlist:archCollapsed', archEl.classList.contains('collapsed')?'1':'0'); } catch(e){}
+};
+try { if(localStorage.getItem('cutlist:archCollapsed')==='1') archEl.classList.add('collapsed'); } catch(e){}
 
 async function loadDensity(){
   try { const r = localStorage.getItem('cutlist:density'); if (r) applyDensity(r, false); }
