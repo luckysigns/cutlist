@@ -249,6 +249,8 @@
   .te-sw.sel { border-color: #fff; }
   .te-del { background: transparent; border: 0; color: var(--dim); cursor: pointer; font-size: 16px; }
   .te-del:hover { color: var(--signal); }
+  .te-del.disabled { opacity: .3; cursor: not-allowed; }
+  .te-del.disabled:hover { color: var(--dim); }
   .te-add { background: transparent; border: 1px dashed var(--edge); color: var(--muted); border-radius: 9px;
     padding: 8px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 700; }
   .te-add:hover { border-color: var(--dim); color: var(--text); }
@@ -792,14 +794,25 @@ function renderTypeEditor(){
   TYPES.forEach((t,i)=>{
     const row=document.createElement('div'); row.className='te-row';
     const colors=COLORS.map(c=>`<span class="te-sw${t.color===c?' sel':''}" data-c="${c}" style="background:${c}"></span>`).join('');
-    row.innerHTML=`<input type="text" value="${esc(t.name)}" placeholder="Type name"><div class="te-colors">${colors}</div><button class="te-del" title="Remove">×</button>`;
+    const lastOne = TYPES.length<=1;
+    row.innerHTML=`<input type="text" value="${esc(t.name)}" placeholder="Type name"><div class="te-colors">${colors}</div><button class="te-del${lastOne?' disabled':''}" title="${lastOne?'Keep at least one type':'Delete type'}">×</button>`;
     row.querySelector('input').oninput=e=>{ TYPES[i].name=e.target.value; saveTypes(); renderTypeSelect(); };
     row.querySelectorAll('.te-sw').forEach(sw=>{
       sw.onclick=()=>{ TYPES[i].color=sw.dataset.c; if(draft.vtype===t.id) draft.color=sw.dataset.c; saveTypes(); renderTypeEditor(); renderTypeSelect(); };
     });
     row.querySelector('.te-del').onclick=()=>{
-      if(TYPES.length<=1) return; // keep at least one
-      TYPES.splice(i,1); saveTypes(); renderTypeEditor(); renderTypeSelect();
+      if(TYPES.length<=1) return; // must keep at least one
+      const removed=TYPES[i];
+      TYPES.splice(i,1);
+      const fallback=TYPES[0];
+      // reassign any cards that used the removed type
+      let touched=false;
+      ideas.forEach(idea=>{ if(idea.vtype===removed.id){ idea.vtype=fallback.id; idea.color=fallback.color; touched=true; } });
+      // update the open draft if it was using it
+      if(draft && draft.vtype===removed.id){ draft.vtype=fallback.id; draft.color=fallback.color; }
+      saveTypes();
+      if(touched){ cacheLocal(); pushAll(); }
+      renderTypeEditor(); renderTypeSelect(); render();
     };
     box.appendChild(row);
   });
