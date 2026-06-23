@@ -42,7 +42,8 @@
   .add-btn { border: 0; background: var(--signal); color: #fff; font-family: inherit; font-weight: 700; font-size: 13px;
     padding: 9px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: transform .12s, filter .15s; }
   .sync { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--muted);
-    background: var(--panel); border: 1px solid var(--edge); padding: 6px 10px; border-radius: 9px; }
+    background: var(--panel); border: 1px solid var(--edge); padding: 6px 10px; border-radius: 9px; cursor: pointer; transition: border-color .15s; }
+  .sync:hover { border-color: var(--dim); }
   .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); transition: background .2s; }
   .sync.ok .sync-dot { background: var(--green); }
   .sync.syncing .sync-dot { background: var(--amber); animation: pulse2 1s infinite; }
@@ -475,39 +476,45 @@ async function load() {
   loadTypesLocal();
   render();
   // 2) pull from cloud
-  if (sb) {
-    setSync('syncing', 'Syncing…');
-    try {
-      // types first (so cards color correctly)
-      try {
-        const { data: meta } = await sb.from('cutlist_meta').select('*').eq('key','types').maybeSingle();
-        if (meta && Array.isArray(meta.value) && meta.value.length) {
-          TYPES = meta.value;
-          try { localStorage.setItem('cutlist:types', JSON.stringify(TYPES)); } catch(e){}
-        } else {
-          // push our local/default types up so cloud has them
-          sb.from('cutlist_meta').upsert({ key:'types', value: TYPES, updated_at:new Date().toISOString() });
-        }
-      } catch(te){ console.error('types load', te); }
+  await cloudSync(true);
+}
 
-      const { data, error } = await sb.from(TABLE).select('*').order('position', { ascending: true });
-      if (error) throw error;
-      if (data && data.length) {
-        ideas = data.map(fromRow);
-        cacheLocal(); render();
-      } else if (!ideas.length) {
-        seedLocalOnly(); await pushAll();
+let lastSyncError = '';
+async function cloudSync(isInitial){
+  if (!sb) { if(!ideas.length){ seedLocalOnly(); render(); } return; }
+  setSync('syncing', 'Syncing…');
+  try {
+    // types first (so cards color correctly)
+    try {
+      const { data: meta, error: me } = await sb.from('cutlist_meta').select('*').eq('key','types').maybeSingle();
+      if (me) throw me;
+      if (meta && Array.isArray(meta.value) && meta.value.length) {
+        TYPES = meta.value;
+        try { localStorage.setItem('cutlist:types', JSON.stringify(TYPES)); } catch(e){}
       } else {
-        await pushAll();
+        sb.from('cutlist_meta').upsert({ key:'types', value: TYPES, updated_at:new Date().toISOString() });
       }
-      setSync('ok', 'Synced');
-    } catch(e) {
-      console.error('cloud load failed', e);
-      setSync('err', 'Offline');
-      if (!ideas.length) { seedLocalOnly(); render(); }
+    } catch(te){ console.error('types load', te); throw te; }
+
+    const { data, error } = await sb.from(TABLE).select('*').order('position', { ascending: true });
+    if (error) throw error;
+    if (data && data.length) {
+      ideas = data.map(fromRow);
+      cacheLocal(); render();
+    } else if (isInitial && !ideas.length) {
+      seedLocalOnly(); await pushAll();
+    } else if (!data.length && ideas.length) {
+      await pushAll();
     }
-  } else {
+    lastSyncError = '';
+    setSync('ok', 'Synced');
+    return true;
+  } catch(e) {
+    console.error('cloud sync failed', e);
+    lastSyncError = (e && (e.message || e.hint || e.code)) ? (e.message||e.hint||e.code) : 'cannot reach Supabase';
+    setSync('err', 'Offline — tap to retry');
     if (!ideas.length) { seedLocalOnly(); render(); }
+    return false;
   }
 }
 
@@ -898,6 +905,17 @@ async function loadDensity(){
   try { const r = localStorage.getItem('cutlist:density'); if (r) applyDensity(r, false); }
   catch(e){}
 }
+
+// click the sync badge to force a re-sync
+(function(){
+  const el = document.getElementById('sync');
+  el.style.cursor = 'pointer';
+  el.addEventListener('click', async ()=>{
+    el.title = 'Syncing…';
+    const ok = await cloudSync(false);
+    el.title = ok ? 'Synced with cloud' : ('Offline: ' + lastSyncError + ' — tap to retry');
+  });
+})();
 
 load();
 loadDensity();
